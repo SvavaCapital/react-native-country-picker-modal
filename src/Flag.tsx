@@ -1,4 +1,4 @@
-import React, { memo } from 'react'
+import React, { memo, useEffect } from 'react'
 import { Emoji } from './Emoji'
 import { CountryCode } from './types'
 import { useContext } from './CountryContext'
@@ -45,7 +45,25 @@ interface FlagType {
 const ImageFlag = memo(({ countryCode, flagSize }: FlagType) => {
   const { getImageFlagAsync } = useContext()
   const asyncResult = useAsync(getImageFlagAsync, [countryCode])
-  if (asyncResult.loading) {
+
+  const isResultUndefined = asyncResult.result === undefined;
+
+  useEffect(() => {
+    let timeout;
+    if (!asyncResult.loading && isResultUndefined) {
+      timeout = setTimeout(() => {
+        if (isResultUndefined) {
+          asyncResult.execute([countryCode]);
+        }
+      }, 200)
+    }
+
+    return () => {
+      clearTimeout(timeout)
+    }
+}, [asyncResult.loading, isResultUndefined])
+
+  if (asyncResult.loading || isResultUndefined) {
     return <ActivityIndicator size={'small'} />
   }
   return (

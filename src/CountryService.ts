@@ -12,17 +12,19 @@ import Fuse from 'fuse.js'
 import isEqual from 'lodash.isequal'
 
 const imageJsonUrl =
-  'https://xcarpentier.github.io/react-native-country-picker-modal/countries/'
+  'https://svavacapital.github.io/react-native-country-picker-modal/data/countries.json'
 
 type CountryMap = { [key in CountryCode]: Country }
 
 interface DataCountry {
   emojiCountries?: CountryMap
   imageCountries?: CountryMap
+  imageCountriesFetching: boolean
 }
 const localData: DataCountry = {
   emojiCountries: undefined,
   imageCountries: undefined,
+  imageCountriesFetching: false,
 }
 
 export const loadDataAsync = ((data: DataCountry) => (
@@ -31,14 +33,18 @@ export const loadDataAsync = ((data: DataCountry) => (
   return new Promise((resolve, reject) => {
     switch (dataType) {
       case FlagType.FLAT:
-        if (!data.imageCountries) {
+        if (!data.imageCountries && !data.imageCountriesFetching) {
+          data.imageCountriesFetching = true;
           fetch(imageJsonUrl)
             .then((response: Response) => response.json())
             .then((remoteData: any) => {
               data.imageCountries = remoteData
               resolve(data.imageCountries)
             })
-            .catch(reject)
+            .catch((err) => {
+              data.imageCountriesFetching = false;
+              reject(err)
+            })
         } else {
           resolve(data.imageCountries)
         }
